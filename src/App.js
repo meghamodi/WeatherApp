@@ -1,7 +1,8 @@
 import './App.css';
 // import {useEffect} from 'react';
 import {useState} from 'react';
-
+import SearchCity from './components/SearchCity.js'
+import WeatherData from './components/WeatherData.js'
 function App() {
   const [data,setData] = useState('');
   const [cityData,setCityData] = useState('')
@@ -22,14 +23,8 @@ function App() {
   return (
   
     <div className="App">
-      {}
-      <div className="inputParams">
-        <input id="city" onChange={handleCityName} value={data} defaultValue="city name"/>
-        <button type="submit" onClick={handleWeatherData}>Forecast</button>
-        <p></p>
-        
-      </div>
-      
+      <SearchCity data={data} handleCityName={handleCityName} handleWeatherData={handleWeatherData} />
+      <WeatherData cityData={cityData}/>
     </div>
   );
 }
