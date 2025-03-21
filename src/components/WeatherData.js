@@ -12,8 +12,12 @@ export default function WeatherData({cityData}){
         {cityData.weather.map((weatherId,idx) =>(
           <div key={idx}>
             
-            <p>{weatherId.main}</p>
-            <p>{weatherId.description}</p>
+            <p>Weather: {weatherId.main}</p>
+            <p>Description:{weatherId.description}</p>
+            <p>Temperature:{cityData.main.temp}</p>
+            <p>Humidity:{cityData.main.humidity}</p>
+            <p>Sunrise:{cityData.sys.sunrise}</p>
+            <p>Sunset:{cityData.sys.sunset}</p>
           </div>
         ))}  
       </div>
