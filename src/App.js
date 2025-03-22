@@ -6,6 +6,7 @@ import SearchCity from './components/SearchCity.js'
 import WeatherData from './components/WeatherData.js'
 function App() {
   const [data,setData] = useState('');
+  const [error,setError] = useState(null);
   const [cityData,setCityData] = useState('')
   const [isLoading,setisLoading] = useState(false)
   function handleWeatherData(e){
@@ -13,13 +14,25 @@ function App() {
     setisLoading(true)
     fetch(`/weatherData/${data}`)
 
-    .then((res)=> res.json())
-    .then((result)=> {setCityData(result)
+    .then((res)=> {
+    if (!res.ok){
+      return res.text().then(text => 
+        {
+          throw new Error(text)
+
+      })
+    }
+  return res.json()
+}) 
+    .then((result)=> {
+      setCityData(result)
     setisLoading(false)
   })
-    .catch((error)=>console.error('something wrong',error))
-    
-    
+    .catch((error)=>{
+      console.error('something wrong',error)
+    setError(error.message)
+    setisLoading(false)
+  })
 
   }
   function handleCityName(e){
@@ -28,10 +41,17 @@ function App() {
   return (
   
     <div className="App">
-      {isLoading ? <OrbitProgress color="#32cd32" size="small" text="working" textColor="" /> :
+      
+      {
+      isLoading ? (<OrbitProgress color="#32cd32" size="small" text="working" textColor="" />) :
+      (
+        <>
       <SearchCity data={data} handleCityName={handleCityName} handleWeatherData={handleWeatherData} />
-}
+      {error && <p style={{ color: 'red' }}>❌ {error}</p>} {/* ✅ Show error message */}
+
       <WeatherData cityData={cityData}/>
+      </>
+)}
     </div>
   );
 }
