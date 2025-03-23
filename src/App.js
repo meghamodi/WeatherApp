@@ -12,28 +12,27 @@ function App() {
   function handleWeatherData(e){
     e.preventDefault()
     setisLoading(true)
-    fetch(`/weatherData/${data}`)
+    const fetchCityData = async ()=>{
+      try{
+        setisLoading(true)
+        setError(null)
+        const resp = await fetch(`/weatherData/${data}`)
 
-    .then((res)=> {
-    if (!res.ok){
-      return res.text().then(text => 
-        {
-          throw new Error(text)
-
-      })
+      if (!resp.ok){
+        throw new Error(`Server error ${resp.status},${resp.statusText}`)
+      }
+        
+        const result = await resp.json()
+        setCityData(result)
+        setisLoading(false)
+      }catch(error){
+          console.error(`something went wrong ${error}`)
+          setError(error.message)
+          setisLoading(false)
+          setCityData(null)
+      }
     }
-  return res.json()
-}) 
-    .then((result)=> {
-      setCityData(result)
-    setisLoading(false)
-  })
-    .catch((error)=>{
-      console.error('something wrong',error)
-    setError(error.message)
-    setisLoading(false)
-  })
-
+fetchCityData()
   }
   function handleCityName(e){
     setData(e.target.value)
@@ -47,7 +46,7 @@ function App() {
       (
         <>
       <SearchCity data={data} handleCityName={handleCityName} handleWeatherData={handleWeatherData} />
-      {error && <p style={{ color: 'red' }}>❌ {error}</p>} {/* ✅ Show error message */}
+      {error && <p style={{ color: 'red' }}> {error} </p>}
 
       <WeatherData cityData={cityData}/>
       </>
