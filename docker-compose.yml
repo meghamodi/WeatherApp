@@ -1,0 +1,50 @@
+services:
+  api:
+    build: ./      # Path to your Dockerfile
+    container_name: weather-app-container
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env     # Use the same env file for API
+    depends_on:
+      - db
+    command: ["node", "server/index.js"]
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - api
+  frontend:
+    build: ./
+    container_name: weather-app-frontend
+    ports:
+      - "3001:3000"
+    env_file:
+      - .env
+    depends_on:
+      - api
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - REACT_APP_API_URL=http://localhost:3000
+    command: ["npm", "start"]  # or your frontend start command
+
+  db:
+    image: postgres:15
+    container_name: weather-db
+    restart: always
+    environment:
+      POSTGRES_USER: $(DB_USER)
+      POSTGRES_PASSWORD: $(DB_PASSWORD)
+      POSTGRES_DB: $(DB_NAME)
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+
