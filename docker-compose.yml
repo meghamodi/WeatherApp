@@ -1,0 +1,36 @@
+services:
+  api:
+    build: ./      # Path to your Dockerfile
+    container_name: weather-app-container
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env     # Use the same env file for API
+    depends_on:
+      - db
+    command: ["node", "server/index.js"]
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - api
+
+  db:
+    image: postgres:15
+    container_name: weather-db
+    restart: always
+    environment:
+      POSTGRES_USER: megha
+      POSTGRES_PASSWORD: abc234
+      POSTGRES_DB: weather_data
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+
