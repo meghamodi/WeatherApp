@@ -9,7 +9,7 @@ dotenv.config();
 const app = express();
 app.use(express.json())
 
-
+// Prometheus setup
 client.collectDefaultMetrics();
 
 const weatherRequestCounter = new client.Counter({
@@ -41,6 +41,7 @@ app.get('/weatherData',async(req,res)=>{
     if (!cityName || cityName.trim()===""){
         return res.status(400).json({error:'city name required'})
     }
+    weatherRequestCounter.inc();
     const url = `https://open-weather13.p.rapidapi.com/city/${cityName}/EN`;
     const options = {
         method: 'GET',
@@ -123,6 +124,6 @@ app.get('/weatherData/:cityName',async(req,res)=>{
 })
 
 
-app.listen(3000,()=>{
+app.listen(3000,'0.0.0.0', ()=>{
     console.log("it is working")
 })

@@ -1,0 +1,13 @@
+groups:
+  - name: weather_app_alert_rules
+    interval: 30s
+
+    rules:
+    - alert: NoWeatherRequests
+      expr: increase(weather_requests_total[30s]) == 0
+      for: 30s
+      labels:
+        severity: warning
+      annotations:
+        summary: "No weather requests detected"
+        description: "Weather API has received no requests in the last 30 seconds"
