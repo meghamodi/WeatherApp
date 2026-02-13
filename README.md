@@ -1,70 +1,145 @@
-# Getting Started with Create React App
+# Weather App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A containerized weather application with caching, metrics monitoring, and alerting capabilities.
 
-## Available Scripts
+## Features
+- Weather data fetching via external API
+- PostgreSQL database for caching weather data
+- Prometheus metrics monitoring
+- Custom alerts for monitoring application health
+- React frontend with hot reload support
 
-In the project directory, you can run:
+## Prerequisites
+- Docker and Docker Compose installed
+- Git
 
-### `npm start`
+## How to Run
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 1. Clone the Repository
+```bash
+git clone <repository-url>
+cd weather-app
+```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### 2. Set Up Environment Variables
+Create a `.env` file in the root directory:
+```bash
+# Copy the example file
+cp .env.example .env
 
-### `npm test`
+# Edit with your values
+nano .env
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Required environment variables:
+```
+# Database
+POSTGRES_USER=your_username
+POSTGRES_PASSWORD=your_password
+POSTGRES_DB=weather_data
 
-### `npm run build`
+# API Keys
+RAPID_API_KEY=your_api_key
+RAPID_API_HOST=open-weather13.p.rapidapi.com
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 3. Start the Application
+```bash
+docker-compose up -d
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### 4. Access the Services
+- **Frontend**: http://localhost:3001
+- **Backend API**: http://localhost:3000
+- **Prometheus**: http://localhost:9090
+- **Prometheus Alerts**: http://localhost:9090/alerts
+- **Database**: localhost:5432
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 5. Stop the Application
+```bash
+docker-compose down
+```
 
-### `npm run eject`
+## Monitoring
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### View Metrics
+Access Prometheus at http://localhost:9090 and try these queries:
+```promql
+# Total requests
+weather_requests_total
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+# Cache hit rate
+(weather_cache_hits_total / weather_requests_total) * 100
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+# Request rate per minute
+rate(weather_requests_total[1m]) * 60
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### View Alerts
+Check configured alerts at http://localhost:9090/alerts
 
-## Learn More
+Current alerts:
+- **NoWeatherRequests**: Fires when no requests received for 30 seconds
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Development
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### View Logs
+```bash
+# All services
+docker-compose logs -f
 
-### Code Splitting
+# Specific service
+docker logs weather-app-container
+docker logs weather-app-frontend
+docker logs weather-app-prometheus-1
+docker logs weather-db
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Rebuild After Code Changes
+```bash
+docker-compose down
+docker-compose up --build -d
+```
 
-### Analyzing the Bundle Size
+### Test API Endpoints
+```bash
+# Fetch weather data
+curl http://localhost:3000/weatherData/London
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+# View metrics
+curl http://localhost:3000/metrics
+```
 
-### Making a Progressive Web App
+## Project Structure
+```
+weather-app/
+├── server/              # Backend Node.js code
+├── src/                 # Frontend React code
+├── docker-compose.yml   # Docker services configuration
+├── Dockerfile           # Container build instructions
+├── prometheus.yml       # Prometheus configuration
+├── alert_rules.yml      # Alert rules configuration
+├── .env                 # Environment variables (not in git)
+├── .env.example         # Example environment variables
+└── README.md
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Troubleshooting
 
-### Advanced Configuration
+### Containers not starting
+```bash
+# Check logs
+docker-compose logs
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+# Restart services
+docker-compose restart
+```
 
-### Deployment
+### Database connection issues
+Ensure `.env` file has correct credentials and matches `docker-compose.yml`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+### Prometheus not showing metrics
+1. Check API is exposing metrics: `curl http://localhost:3000/metrics`
+2. Verify Prometheus targets: http://localhost:9090/targets
+3. Check Prometheus logs: `docker logs weather-app-prometheus-1`
 
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
