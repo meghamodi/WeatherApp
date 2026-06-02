@@ -18,6 +18,20 @@ services:
       - ./alert_rules.yml:/etc/prometheus/alert_rules.yml
     depends_on:
       - api
+  grafana:
+    image: grafana/grafana:latest
+    container_name: weather-app-grafana
+    ports:
+      - "3002:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
   frontend:
     build: ./
     container_name: weather-app-frontend
@@ -46,6 +60,24 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  locust:
+      image: locustio/locust
+      container_name: weather-app-locust
+      ports:
+          - "8089:8089"
+      volumes:
+          - ./load_tests/:/mnt/locust
+      command: >
+        -f /mnt/locust/locust.py
+        --host=http://api:3000
+        --headless
+        --users=5
+        --spawn-rate 1
+        --run-time 2m
+      depends_on:
+        - api
+
 volumes:
   pgdata:
+  grafana-data:
 
