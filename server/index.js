@@ -3,8 +3,8 @@ import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import pool from './db.js';
 import client from 'prom-client';
+import logger from './logger.js';
 dotenv.config();
-
 
 const app = express();
 app.use(express.json())
@@ -32,45 +32,18 @@ app.get('/test-db', async (req, res) => {
     const result = await pool.query('SELECT NOW()');
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: 'DB connection failed' });
   }
 });
-app.get('/weatherData',async(req,res)=>{
-    const cityName = req.query.cityName
-    if (!cityName || cityName.trim()===""){
-        return res.status(400).json({error:'city name required'})
-    }
-    weatherRequestCounter.inc();
-    const url = `https://open-weather13.p.rapidapi.com/city/${cityName}/EN`;
-    const options = {
-        method: 'GET',
-        headers: {
-            'x-rapidapi-key': process.env.RAPID_API_KEY,
-            'x-rapidapi-host': process.env.RAPID_API_HOST,
-            Accept: 'application/json'
-        }
-    };
-    try {
-        const response = await fetch(url,options);
-        if (!response.ok){
-            throw new Error(`API Status: ${response.status}`)
-        }
-        const result = await response.json();
-        console.log(result)
-
-        res.json(result)
-
-    }catch(error){
-        console.error(error)
-        res.status(500).json({error:'Something went wrong'})
-    }
-}
-)
 // This endpoint is used for fetching data from weather api
 app.get('/weatherData/:cityName',async(req,res)=>{
     const cityName = req.params.cityName
+    logger.log('info',`Received request for weather data of ${cityName}`)
     if (!cityName || cityName.trim()===""){
+        logger.log('warn', {
+                city: cityName,
+                message: 'City name missing'
+          });
         return res.status(400).json({error:'city name required'})
     }
     try {
@@ -82,7 +55,6 @@ app.get('/weatherData/:cityName',async(req,res)=>{
   
       if (rows.length > 0) {
         weatherCacheHits.inc();
-        console.log('✅ Returning cached data');
         return res.json(rows[0].data);
       }
     
@@ -95,15 +67,12 @@ app.get('/weatherData/:cityName',async(req,res)=>{
             Accept: 'application/json'
         }
     }
-   
-    
-        
+       
     const response = await fetch(url,options);
     if (!response.ok){
         throw new Error(`API Status: ${response.status}`)
     }
     const result = await response.json();
-    console.log(result)
 
     await pool.query(
         `INSERT INTO weather_cache (city, data, updated_at)
@@ -112,13 +81,15 @@ app.get('/weatherData/:cityName',async(req,res)=>{
          DO UPDATE SET data = $2, updated_at = NOW()`,
         [cityName, result]
       );
-    
-      console.log('🌤️ Cached new weather data for', cityName);
-
+      logger.log('info',`Cached new weather data for ${cityName}`)
     res.json(result)
 
     }catch(error){
-        console.error(error)
+        
+        logger.log('error', {
+            city: cityName,
+            error: error.message
+          });
         res.status(500).json({error:'Something went wrong'})
     }
 })

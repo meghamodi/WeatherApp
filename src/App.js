@@ -4,6 +4,7 @@ import {useState} from 'react';
 import {OrbitProgress} from 'react-loading-indicators';
 import SearchCity from './components/SearchCity.js'
 import WeatherData from './components/WeatherData.js'
+import {Header} from './components/Header';
 function App() {
   const [data,setData] = useState('');
   const [error,setError] = useState(null);
@@ -40,6 +41,7 @@ fetchCityData()
   return (
   
     <div className="App">
+      <Header/>
       
       {
       isLoading ? (<OrbitProgress color="#32cd32" size="small" text="working" textColor="" />) :
