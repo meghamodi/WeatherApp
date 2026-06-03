@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import pool from './db.js';
 import client from 'prom-client';
 import logger from './logger.js';
+import { v4 as uuidv4 } from 'uuid';
 dotenv.config();
 
 const app = express();
@@ -22,6 +23,25 @@ const weatherCacheHits = new client.Counter({
     help:'Total number of requests served from cache',
 });
 
+app.use((req, res, next) => {
+    req.requestId = uuidv4();
+    req.startTime = Date.now();
+    next();
+  });
+
+  app.use((req, res, next) => {
+    res.on('finish', () => {
+      logger.info('request completed', {
+        requestId: req.requestId,
+        method: req.method,
+        path: req.path,
+        statusCode: res.statusCode,
+        durationMs: Date.now() - req.startTime,
+      });
+    });
+    next();
+  });
+
 app.get('/metrics',async(req,res)=>{
     res.set('Content-Type',client.register.contentType);
     res.end(await client.register.metrics());
@@ -38,12 +58,12 @@ app.get('/test-db', async (req, res) => {
 // This endpoint is used for fetching data from weather api
 app.get('/weatherData/:cityName',async(req,res)=>{
     const cityName = req.params.cityName
-    logger.log('info',`Received request for weather data of ${cityName}`)
+    logger.info('Received request for weather data', {
+        requestId: req.requestId,
+        city: cityName,
+      });
     if (!cityName || cityName.trim()===""){
-        logger.log('warn', {
-                city: cityName,
-                message: 'City name missing'
-          });
+        logger.warn('City name missing', { requestId: req.requestId });
         return res.status(400).json({error:'city name required'})
     }
     try {
@@ -55,6 +75,7 @@ app.get('/weatherData/:cityName',async(req,res)=>{
   
       if (rows.length > 0) {
         weatherCacheHits.inc();
+        
         return res.json(rows[0].data);
       }
     
@@ -72,6 +93,7 @@ app.get('/weatherData/:cityName',async(req,res)=>{
     if (!response.ok){
         throw new Error(`API Status: ${response.status}`)
     }
+    
     const result = await response.json();
 
     await pool.query(
@@ -81,20 +103,24 @@ app.get('/weatherData/:cityName',async(req,res)=>{
          DO UPDATE SET data = $2, updated_at = NOW()`,
         [cityName, result]
       );
-      logger.log('info',`Cached new weather data for ${cityName}`)
+    logger.info('Fetched and cached weather data', { requestId: req.requestId, city: cityName });
     res.json(result)
 
     }catch(error){
-        
-        logger.log('error', {
+        logger.error('Weather request failed', {
+            requestId: req.requestId,
             city: cityName,
-            error: error.message
-          });
+            error: error.message,
+            stack: error.stack,
+        });
+
         res.status(500).json({error:'Something went wrong'})
     }
 })
 
 
 app.listen(3000,'0.0.0.0', ()=>{
-    console.log("it is working")
+    logger.info('Server started', {
+        port: 3000
+      });
 })

@@ -1,26 +1,36 @@
 services:
   api:
-    build: ./      # Path to your Dockerfile
+    build: ./server      # Path to your Dockerfile
     container_name: weather-app-container
+    networks:
+      - app-network
+    # host port: container port
     ports:
-      - "3000:3000"
+      - "5001:3000"
     env_file:
       - .env     # Use the same env file for API
     depends_on:
       - db
-    command: ["node", "server/index.js"]
+    command: ["node", "index.js"]
+
   prometheus:
     image: prom/prometheus:latest
+    networks:
+      - app-network
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./alert_rules.yml:/etc/prometheus/alert_rules.yml
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml
     depends_on:
       - api
+
+
   grafana:
     image: grafana/grafana:latest
     container_name: weather-app-grafana
+    networks:
+      - app-network
     ports:
       - "3002:3000"
     environment:
@@ -29,12 +39,16 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       - prometheus
+
+
   frontend:
-    build: ./
+    build: ./frontend
     container_name: weather-app-frontend
+    networks:
+      - app-network
     ports:
       - "3001:3000"
     env_file:
@@ -44,40 +58,47 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
-      - REACT_APP_API_URL=http://localhost:3000
+      - REACT_APP_API_URL=http://localhost:5001
     command: ["npm", "start"]  # or your frontend start command
 
   db:
     image: postgres:15
     container_name: weather-db
     restart: always
+    networks:
+      - app-network
     environment:
-      POSTGRES_USER: $(DB_USER)
-      POSTGRES_PASSWORD: $(DB_PASSWORD)
-      POSTGRES_DB: $(DB_NAME)
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./server/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
 
-  locust:
-      image: locustio/locust
-      container_name: weather-app-locust
-      ports:
-          - "8089:8089"
-      volumes:
-          - ./load_tests/:/mnt/locust
-      command: >
-        -f /mnt/locust/locust.py
-        --host=http://api:3000
-        --headless
-        --users=5
-        --spawn-rate 1
-        --run-time 2m
-      depends_on:
-        - api
+  # locust:
+  #     image: locustio/locust
+  #     container_name: weather-app-locust
+  #     ports:
+  #         - "8089:8089"
+  #     volumes:
+  #         - ./load_tests/:/mnt/locust
+  #     command: >
+  #       -f /mnt/locust/locust.py
+  #       --host=http://api:3000
+  #       --headless
+  #       --users=5
+  #       --spawn-rate 1
+  #       --run-time 2m
+  #     depends_on:
+  #       - api
 
 volumes:
   pgdata:
   grafana-data:
+
+networks:
+  app-network:
+    driver: bridge
 

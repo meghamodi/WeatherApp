@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS weather_cache (
+    city VARCHAR(255) PRIMARY KEY,
+    data JSONB NOT NULL,
+    updated_at TIMESTAMP DEFAULT NOW()
+);
