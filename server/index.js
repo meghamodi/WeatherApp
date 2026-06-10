@@ -39,19 +39,19 @@ app.get('/test-db', async (req, res) => {
   }
 });
 
-// This endpoint is used for fetching data from weather api
-app.get('/weatherData/:cityName',async(req,res)=>{
-    console.log("RAPID KEY:", process.env.RAPID_API_KEY);
-    console.log("RAPID HOST:", process.env.RAPID_API_HOST); 
+// This endpoint is used for fetching data from rapidapi
+app.get('/weatherData/:cityName',async(req,res)=>{ 
     const cityName = req.params.cityName
     logger.info('Received request for weather data', {
         requestId: req.requestId,
         city: cityName,
       });
+    // validating city name
     if (!cityName || cityName.trim()===""){
         logger.warn('City name missing', { requestId: req.requestId });
         return res.status(400).json({error:'city name required'})
     }
+    // checking cache to avoid unnecessary api calls and reduce latency
     try {
     const { rows } = await pool.query(
         'SELECT * FROM weather_cache WHERE city = $1 AND updated_at > NOW() - INTERVAL \'1 hour\'',
@@ -62,7 +62,7 @@ app.get('/weatherData/:cityName',async(req,res)=>{
         
         return res.json(rows[0].data);
       }
-    
+    // incase of new city or cache miss, hit the api and cache the result
     const url = `https://open-weather13.p.rapidapi.com/city/${cityName}/EN`;
     const options = {
         method: 'GET',
