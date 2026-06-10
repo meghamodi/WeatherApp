@@ -1,6 +1,6 @@
 # Weather App
 
-A containerized weather application with caching, metrics monitoring, and alerting capabilities.
+A containerized weather application that fetches real-time weather data from an external API and caches responses to improve performance and reduce API calls.
 
 ## Features
 - Weather data fetching via external API
@@ -9,7 +9,7 @@ A containerized weather application with caching, metrics monitoring, and alerti
 
 ## Prerequisites
 - Docker
-- Git
+- Rapid Api account and key
 
 ## How to Run
 
@@ -20,9 +20,8 @@ cd weather-app
 ```
 
 ### 2. Set Up Environment Variables
-Create a `.env` file in the root directory:
+Create a `.env` file in the server directory:
 ```bash
-# Copy the .env file from the medium article.Edit with your values
 nano .env
 ```
 
@@ -43,11 +42,10 @@ RAPID_API_HOST=open-weather13.p.rapidapi.com
 
 ### 4. Access the Services
 - **Frontend**: http://localhost:3001
-- **Backend API**: http://localhost:3000
-- **Database**: localhost:5432
-
-
-## Development
+- **Database**(inside docker container)
+```
+docker exec -it weather-db psql -U <username> -d <dbname>
+```
 
 ### View Logs
 ```bash
@@ -63,26 +61,14 @@ docker logs weather-db
 curl http://localhost:3000/weatherData/London
 ```
 
-## Project Structure
-```
-weather-app/
-├── server/              # Backend Node.js code
-├── src/                 # Frontend React code
-├── docker-compose.yml   # Docker services configuration
-├── Dockerfile           # Container build instructions
-├── prometheus.yml       # Prometheus configuration
-├── alert_rules.yml      # Alert rules configuration
-├── .env                 # Environment variables (not in git)
-├── .env.example         # Example environment variables
-└── README.md
-```
-
 ## Troubleshooting
 
 ### Containers not starting
 ```bash
 # Check logs
 docker logs <container-id>
+
+Ensure Docker has the necessary permissions for the directory where you plan to clone the project. 
 
 ### Database connection issues
 Ensure `.env` file has correct credentials.
