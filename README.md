@@ -41,7 +41,7 @@ RAPID_API_HOST=open-weather13.p.rapidapi.com
 
 
 ### 4. Access the Services
-- **Frontend**: http://localhost:3001
+- **Frontend**: http://localhost:3000
 - **Database**(inside docker container)
 ```
 docker exec -it weather-db psql -U <username> -d <dbname>
