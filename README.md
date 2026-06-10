@@ -52,8 +52,8 @@ RAPID_API_HOST=open-weather13.p.rapidapi.com
 ### View Logs
 ```bash
 # Specific service
-docker logs weather-app-container
-docker logs weather-app-frontend
+docker logs weather-backend
+docker logs weather-frontend
 docker logs weather-db
 ```
 
