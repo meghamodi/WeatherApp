@@ -13,44 +13,13 @@ services:
       - db
     command: ["node", "index.js"]
 
-  prometheus:
-    image: prom/prometheus:latest
-    networks:
-      - app-network
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./monitoring/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml
-    depends_on:
-      - api
-
-
-  grafana:
-    image: grafana/grafana:latest
-    container_name: weather-app-grafana
-    networks:
-      - app-network
-    ports:
-      - "3002:3000"
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_USERS_ALLOW_SIGN_UP=false
-    volumes:
-      - grafana-data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
-    depends_on:
-      - prometheus
-
-
   frontend:
     build: ./frontend
     container_name: weather-app-frontend
     networks:
       - app-network
     ports:
-      - "3001:3000"
+      - "3000:3000"
     env_file:
       - .env
     depends_on:
@@ -58,7 +27,7 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
-      - REACT_APP_API_URL=http://localhost:5001
+      - REACT_APP_API_URL=http://api:3000
     command: ["npm", "start"]  # or your frontend start command
 
   db:
@@ -68,35 +37,17 @@ services:
     networks:
       - app-network
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./server/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
 
-  # locust:
-  #     image: locustio/locust
-  #     container_name: weather-app-locust
-  #     ports:
-  #         - "8089:8089"
-  #     volumes:
-  #         - ./load_tests/:/mnt/locust
-  #     command: >
-  #       -f /mnt/locust/locust.py
-  #       --host=http://api:3000
-  #       --headless
-  #       --users=5
-  #       --spawn-rate 1
-  #       --run-time 2m
-  #     depends_on:
-  #       - api
-
 volumes:
   pgdata:
-  grafana-data:
 
 networks:
   app-network:

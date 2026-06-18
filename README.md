@@ -4,13 +4,10 @@ A containerized weather application with caching, metrics monitoring, and alerti
 
 ## Features
 - Weather data fetching via external API
-- PostgreSQL database for caching weather data
-- Prometheus metrics monitoring
-- Custom alerts for monitoring application health
 - React frontend with hot reload support
 
 ## Prerequisites
-- Docker and Docker Compose installed
+- Docker
 - Git
 
 ## How to Run
@@ -49,37 +46,13 @@ docker-compose up -d
 ```
 
 ### 4. Access the Services
-- **Frontend**: http://localhost:3001
-- **Backend API**: http://localhost:3000
-- **Prometheus**: http://localhost:9090
-- **Prometheus Alerts**: http://localhost:9090/alerts
-- **Database**: localhost:5432
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:5001/weatherData/London
 
 ### 5. Stop the Application
 ```bash
 docker-compose down
 ```
-
-## Monitoring
-
-### View Metrics
-Access Prometheus at http://localhost:9090 and try these queries:
-```promql
-# Total requests
-weather_requests_total
-
-# Cache hit rate
-(weather_cache_hits_total / weather_requests_total) * 100
-
-# Request rate per minute
-rate(weather_requests_total[1m]) * 60
-```
-
-### View Alerts
-Check configured alerts at http://localhost:9090/alerts
-
-Current alerts:
-- **NoWeatherRequests**: Fires when no requests received for 30 seconds
 
 ## Development
 
@@ -91,7 +64,6 @@ docker-compose logs -f
 # Specific service
 docker logs weather-app-container
 docker logs weather-app-frontend
-docker logs weather-app-prometheus-1
 docker logs weather-db
 ```
 
@@ -104,24 +76,8 @@ docker-compose up --build -d
 ### Test API Endpoints
 ```bash
 # Fetch weather data
-curl http://localhost:3000/weatherData/London
+curl http://localhost:5001/weatherData/London
 
-# View metrics
-curl http://localhost:3000/metrics
-```
-
-## Project Structure
-```
-weather-app/
-├── server/              # Backend Node.js code
-├── src/                 # Frontend React code
-├── docker-compose.yml   # Docker services configuration
-├── Dockerfile           # Container build instructions
-├── prometheus.yml       # Prometheus configuration
-├── alert_rules.yml      # Alert rules configuration
-├── .env                 # Environment variables (not in git)
-├── .env.example         # Example environment variables
-└── README.md
 ```
 
 ## Troubleshooting
@@ -138,8 +94,4 @@ docker-compose restart
 ### Database connection issues
 Ensure `.env` file has correct credentials and matches `docker-compose.yml`
 
-### Prometheus not showing metrics
-1. Check API is exposing metrics: `curl http://localhost:3000/metrics`
-2. Verify Prometheus targets: http://localhost:9090/targets
-3. Check Prometheus logs: `docker logs weather-app-prometheus-1`
 
