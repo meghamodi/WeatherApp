@@ -47,6 +47,9 @@ docker-compose up -d
 
 ### 4. Access the Services
 - **Frontend**: http://localhost:3000
+<img width="1083" height="372" alt="Screenshot 2026-06-19 at 9 50 06 AM" src="https://github.com/user-attachments/assets/f88d2183-2866-421b-83f0-b18e06d6eacf" />
+
+
 - **Backend API**: http://localhost:5001/weatherData/London
 
 ### 5. Stop the Application
@@ -79,6 +82,8 @@ docker-compose up --build -d
 curl http://localhost:5001/weatherData/London
 
 ```
+<img width="1104" height="72" alt="Screenshot 2026-06-19 at 9 43 44 AM" src="https://github.com/user-attachments/assets/d2407ee8-317b-4894-8ade-dba97194cfd1" />
+
 
 ## Troubleshooting
 
