@@ -5,9 +5,9 @@ export default function SearchCity({data,handleCityName,handleWeatherData}){
 
 return (
     
-    <div className="inputParams">
+    <form className="inputParams" onSubmit={handleWeatherData}>
         <input id="city" onChange={handleCityName} value={data} placeholder="city name"/>
-        <button type="submit" onClick={handleWeatherData}>Forecast</button>
-      </div>
+        <button type="submit">Forecast</button>
+      </form>
 )
 }

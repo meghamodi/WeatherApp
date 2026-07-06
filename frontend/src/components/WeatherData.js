@@ -3,25 +3,28 @@
 //  ├──> WeatherData (Child) receives and displays the data
 
 export default function WeatherData({cityData}){
-    return (
+  if (!cityData) return null;
+  const { name, weather, main, sys } = cityData;
+  return (
+      <div>
+      {name && <h3>Weather for {name}</h3>}
+      {weather?.length > 0 && (
         <div>
-        {cityData.weather && cityData.weather.length > 0 && (
-        <div>
-        {cityData.name && <h3>Weather for {cityData.name}</h3>}
-        
-        {cityData.weather.map((weatherId,idx) =>(
-          <div key={idx}>
-            
-            <p>Weather: {weatherId.main}</p>
-            <p>Description:{weatherId.description}</p>
-            <p>Temperature:{cityData.main.temp}</p>
-            <p>Humidity:{cityData.main.humidity}</p>
-            <p>Sunrise:{cityData.sys.sunrise}</p>
-            <p>Sunset:{cityData.sys.sunset}</p>
+          {weather.map((w, idx) => (
+            <div key={idx} className="weather-card">
+              <p><strong>Weather:</strong> {w.main}</p>
+              <p><strong>Description:</strong> {w.description}</p>
+            </div>
+          ))}
+        <div className="weather-details">
+          
+        <p><strong>Temperature:</strong> {main?.temp}°C</p>
+            <p><strong>Humidity:</strong> {main?.humidity}%</p>
+            <p><strong>Sunrise:</strong> {new Date(sys?.sunrise * 1000).toLocaleTimeString()}</p>
+            <p><strong>Sunset:</strong> {new Date(sys?.sunset * 1000).toLocaleTimeString()}</p>
           </div>
-        ))}  
-      </div>
-    )}
+        </div>
+      )}
     </div>
-    )
+  );
 }
