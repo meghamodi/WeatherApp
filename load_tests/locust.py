@@ -12,7 +12,7 @@ cities = [
 
 
 class WeatherUser(HttpUser):
-    wait_time = between(1, 10)
+    wait_time = between(1, 3)
 
     @task
     def get_weather(self):

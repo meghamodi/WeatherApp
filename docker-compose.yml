@@ -76,24 +76,24 @@ services:
     depends_on:
       - prometheus
   
-  # locust:
-  #   image: locustio/locust
-  #   container_name: weather-app-locust
-  #   networks:
-  #     - app-network
-  #   ports:
-  #       - "8089:8089"
-  #   volumes:
-  #       - ./load_tests/:/mnt/locust
-  #   command: >
-  #     -f /mnt/locust/locust.py
-  #     --host=http://api:3000
-  #     --headless
-  #     --users=5
-  #     --spawn-rate 1
-  #     --run-time 2m
-  #   depends_on:
-  #     - api
+  locust:
+    image: locustio/locust
+    container_name: weather-app-locust
+    networks:
+      - app-network
+    ports:
+        - "8089:8089"
+    volumes:
+        - ./load_tests/:/mnt/locust
+    command: >
+      -f /mnt/locust/locust.py
+      --host=http://api:3000
+      --headless
+      --users=5
+      --spawn-rate 1
+      --run-time 2m
+    depends_on:
+      - api
 
 volumes:
   pgdata:
