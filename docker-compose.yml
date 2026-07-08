@@ -46,6 +46,7 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./server/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
 
+# add prometheus service 
   prometheus:
     image: prom/prometheus:latest
     networks:
@@ -58,7 +59,7 @@ services:
     depends_on:
       - api
 
-
+# add grafana service 
   grafana:
     image: grafana/grafana:latest
     container_name: weather-app-grafana
@@ -75,7 +76,8 @@ services:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       - prometheus
-  
+
+# add locust service 
   locust:
     image: locustio/locust
     container_name: weather-app-locust
