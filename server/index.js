@@ -17,6 +17,12 @@ const weatherRequestCounter = new client.Counter({
     name:'weather_requests_total',
     help:'Total number of weather API requests',
     labelNames: ['status'],
+    
+});
+const weatherRequestDuration = new client.Histogram({
+  name: 'weather_request_duration_seconds',
+  help: 'Duration of successful weather lookups in seconds',
+  buckets: [0.05, 0.1, 0.25, 0.5, 1, 2, 5],
 });
 
 const weatherCacheHits = new client.Counter({
@@ -46,7 +52,9 @@ app.use((req, res, next) => {
 app.get('/metrics',async(req,res)=>{
     res.set('Content-Type',client.register.contentType);
     res.end(await client.register.metrics());
+    
 })
+
 // test connection
 app.get('/test-db', async (req, res) => {
   try {
@@ -59,18 +67,25 @@ app.get('/test-db', async (req, res) => {
 // This endpoint is used for fetching data from weather api
 app.get('/weatherData/:cityName',async(req,res)=>{
     const cityName = req.params.cityName
-    let status = '2xx';
+    res.once('finish', () => {
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+          const durationSeconds = (Date.now() - req.startTime) / 1000;
+          weatherRequestDuration.observe(durationSeconds);
+      }
+  });
+    let status = '200';
     logger.info('Received request for weather data', {
         requestId: req.requestId,
         city: cityName,
       });
-    if (!cityName || cityName.trim()==="" ){
-        status = '4xx';
+    try{
+      if (!cityName || cityName.trim()==="" ){
+        status = '400';
         logger.warn('City name missing', { requestId: req.requestId });
      
         return res.status(400).json({error:'city name not found'})
     }
-    try {
+    
     const { rows } = await pool.query(
         'SELECT * FROM weather_cache WHERE city = $1 AND updated_at > NOW() - INTERVAL \'1 hour\'',
         [cityName]
@@ -102,7 +117,7 @@ app.get('/weatherData/:cityName',async(req,res)=>{
     const result = await response.json();
 
     if (result.cod === "404" || result.cod === 404){
-      status = '4xx';
+      status = '404';
       logger.warn("City not found", {
         requestId: req.requestId,
         city: cityName,
@@ -129,7 +144,7 @@ app.get('/weatherData/:cityName',async(req,res)=>{
             error: error.message,
             stack: error.stack,
         });
-        status = '5xx';
+        status='500';
         return res.status(500).json({
           error:'Something went wrong'
         })

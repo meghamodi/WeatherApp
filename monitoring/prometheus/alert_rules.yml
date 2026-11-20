@@ -1,0 +1,18 @@
+groups:
+  - name: weather_app_alert_rules
+    rules:
+      - alert: WeatherApiHighAlert
+        expr: 100 * sum(rate(weather_requests_total{job="weather-api", status=~"5[0-9]{2}"}[5m]))/sum(rate(weather_requests_total{job="weather-api"}[5m])) > 2
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Weather API 5xx error rate is above 2%"
+      - alert: WeatherApiScrapeDown
+        expr: up{job="weather-api"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prometheus cannot scrape the Weather API"
+      

@@ -47,9 +47,58 @@ services:
       - ./server/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
 
 # add prometheus service 
+  prometheus:
+      image: prom/prometheus:latest
+      networks:
+        - app-network
+      ports:
+        - "9090:9090"
+      volumes:
+        - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+        - ./monitoring/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml
+        - prometheus-data:/prometheus
+      command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      restart: unless-stopped
+      depends_on:
+        - api
 
 
-# add grafana service 
+  grafana:
+    image: grafana/grafana:latest
+    container_name: weather-app-grafana
+    networks:
+      - app-network
+    ports:
+      - "3002:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+
+  # locust:
+  #     image: locustio/locust
+  #     container_name: weather-app-locust
+  #     ports:
+  #         - "8089:8089"
+  #     volumes:
+  #         - ./load_tests/:/mnt/locust
+  #     command: >
+  #       -f /mnt/locust/locust.py
+  #       --host=http://api:3000
+  #       --headless
+  #       --users=5
+  #       --spawn-rate 1
+  #       --run-time 2m
+  #     depends_on:
+  #       - api
 
 
 # add locust service 
@@ -58,6 +107,7 @@ services:
 volumes:
   pgdata:
   grafana-data:
+  prometheus-data:
 
 networks:
   app-network:
